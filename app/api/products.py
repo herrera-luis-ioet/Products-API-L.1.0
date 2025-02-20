@@ -9,12 +9,16 @@ router = APIRouter()
 
 class ProductCreate(BaseModel):
     """Model for creating a product with validation."""
-    name: str = Field(description="Product name")
-    description: str = Field(description="Product description")
-    price: float = Field(gt=0, description="Product price")
-    category: Optional[str] = Field(default=None, description="Product category")
-    multimedia: Optional[List[str]] = Field(default=[], description="List of URLs")
-    stock_quantity: int = Field(default=0, ge=0, description="Product stock quantity")
+    name: str = Field(description="Product name", min_length=1, max_length=100)
+    description: str = Field(description="Product description", min_length=10, max_length=1000)
+    price: float = Field(gt=0, lt=1000000, description="Product price (greater than 0 and less than 1,000,000)")
+    category: Optional[str] = Field(default=None, min_length=2, max_length=50, description="Product category")
+    multimedia: Optional[List[str]] = Field(
+        default=[], 
+        max_length=5,
+        description="List of media URLs (maximum 5 URLs)"
+    )
+    stock_quantity: int = Field(default=0, ge=0, le=100000, description="Product stock quantity (0 to 100,000)")
 
     class Config:
         schema_extra = {
