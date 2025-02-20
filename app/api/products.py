@@ -16,7 +16,7 @@ class ProductCreate(BaseModel):
     multimedia: Optional[List[str]] = Field(
         default=[], 
         max_length=5,
-        description="List of media URLs (maximum 5 URLs)"
+        description="List of media URLs (maximum 5 URLs). Each URL should be a valid string pointing to media content."
     )
     stock_quantity: int = Field(default=0, ge=0, le=100000, description="Product stock quantity (0 to 100,000)")
 
