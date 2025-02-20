@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from .database import engine, Base
-from .api.products import router as product_router
+from app.api.products import router as product_router
 
 app = FastAPI(
     title="Products API",
