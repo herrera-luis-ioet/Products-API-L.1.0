@@ -9,25 +9,25 @@
       "subtasks": {
         "Task1SubTask1": {
           "description": "Create basic project structure",
-          "status": "to-do",
+          "status": "completed",
           "micro_agent": "CodeWritingAgent",
           "details": "Create the basic FastAPI project structure with all necessary directories and files:\n- app/: Main application package\n- app/api/: API routes\n- app/models/: Database models\n- app/services/: Business logic\n- app/repositories/: Data access layer\n- app/database.py: Database configuration\n- app/main.py: Application entry point\n- requirements.txt: Project dependencies"
         },
         "Task1SubTask2": {
           "description": "Implement database models and configuration",
-          "status": "to-do",
+          "status": "completed",
           "micro_agent": "CodeWritingAgent",
           "details": "Create SQLAlchemy models for Product entity with fields:\n- id\n- name\n- description\n- price\n- created_at\n- updated_at\nImplement database configuration and connection handling in database.py"
         },
         "Task1SubTask3": {
           "description": "Implement repository layer",
-          "status": "to-do",
+          "status": "completed",
           "micro_agent": "CodeWritingAgent",
           "details": "Create ProductRepository class with CRUD operations:\n- create_product\n- get_product\n- get_all_products\n- update_product\n- delete_product\nImplement proper error handling and database interactions"
         },
         "Task1SubTask4": {
           "description": "Implement service layer",
-          "status": "to-do",
+          "status": "completed",
           "micro_agent": "CodeWritingAgent",
           "details": "Create ProductService class with business logic:\n- create_product\n- get_product\n- get_all_products\n- update_product\n- delete_product\nInclude validation and error handling"
         },
