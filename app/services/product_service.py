@@ -1,4 +1,5 @@
 from typing import List, Optional, Dict
+from urllib.parse import urlparse
 from app.models.product import Product
 from app.repositories.product_repository import ProductRepository
 
@@ -45,6 +46,37 @@ class ProductService:
         if 'name' in product_data and not product_data['name'].strip():
             raise ValueError("Product name must not be empty")
 
+        # Validate category (optional string)
+        if 'category' in product_data:
+            category = product_data['category']
+            if category is not None and not isinstance(category, str):
+                raise ValueError("Category must be a string")
+
+        # Validate multimedia (list of valid URLs)
+        if 'multimedia' in product_data:
+            multimedia = product_data['multimedia']
+            if multimedia is not None:
+                if not isinstance(multimedia, list):
+                    raise ValueError("Multimedia must be a list of URLs")
+                for url in multimedia:
+                    if not isinstance(url, str):
+                        raise ValueError("Each multimedia item must be a string URL")
+                    try:
+                        result = urlparse(url)
+                        if not all([result.scheme, result.netloc]):
+                            raise ValueError(f"Invalid URL format: {url}")
+                    except Exception as e:
+                        raise ValueError(f"Invalid URL: {url}")
+
+        # Validate stock_quantity (non-negative integer)
+        if 'stock_quantity' in product_data:
+            stock_quantity = product_data['stock_quantity']
+            if stock_quantity is not None:
+                if not isinstance(stock_quantity, int):
+                    raise ValueError("Stock quantity must be an integer")
+                if stock_quantity < 0:
+                    raise ValueError("Stock quantity cannot be negative")
+
     def _validate_product_id(self, product_id: int) -> None:
         """
         Validate product ID.
@@ -68,6 +100,9 @@ class ProductService:
                 - name (str): Product name
                 - description (str, optional): Product description
                 - price (float): Product price
+                - category (str, optional): Product category
+                - multimedia (List[str], optional): List of multimedia URLs
+                - stock_quantity (int, optional): Product stock quantity, defaults to 0
 
         Returns:
             Product: Created product instance
@@ -134,6 +169,9 @@ class ProductService:
                 - name (str, optional): Product name
                 - description (str, optional): Product description
                 - price (float, optional): Product price
+                - category (str, optional): Product category
+                - multimedia (List[str], optional): List of multimedia URLs
+                - stock_quantity (int, optional): Product stock quantity
 
         Returns:
             Product: Updated product instance
