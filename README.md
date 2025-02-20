@@ -11,6 +11,9 @@ A FastAPI-based RESTful API for managing products with SQLite database backend.
 - SQLite database with SQLAlchemy ORM
 - Automatic API documentation with Swagger UI
 - Clean architecture with repository and service patterns
+- Product categorization and filtering
+- Multimedia support for product images and videos
+- Inventory tracking with stock management
 
 ## Requirements
 
@@ -56,6 +59,22 @@ Once the application is running, you can access:
 - Swagger UI documentation: `http://localhost:8000/docs`
 - ReDoc documentation: `http://localhost:8000/redoc`
 
+### Product Fields
+
+The API supports the following fields for each product:
+
+| Field | Type | Description | Constraints |
+|-------|------|-------------|-------------|
+| id | integer | Unique identifier | Auto-generated |
+| name | string | Product name | Required, non-empty |
+| description | string | Product description | Optional |
+| price | float | Product price | Required, > 0, max 2 decimals |
+| category | string | Product category | Optional |
+| multimedia | array | List of media URLs | Optional, valid URLs |
+| stock_quantity | integer | Available inventory | Required, >= 0 |
+| created_at | datetime | Creation timestamp | Auto-generated |
+| updated_at | datetime | Last update timestamp | Auto-updated |
+
 ### API Endpoints
 
 #### Products
@@ -78,7 +97,10 @@ POST /products
 {
   "name": "Sample Product",
   "description": "A sample product description",
-  "price": 29.99
+  "price": 29.99,
+  "category": "Electronics",
+  "multimedia": ["https://example.com/product-image.jpg"],
+  "stock_quantity": 100
 }
 ```
 
@@ -89,6 +111,9 @@ Response:
   "name": "Sample Product",
   "description": "A sample product description",
   "price": 29.99,
+  "category": "Electronics",
+  "multimedia": ["https://example.com/product-image.jpg"],
+  "stock_quantity": 100,
   "created_at": "2024-01-01T00:00:00",
   "updated_at": "2024-01-01T00:00:00"
 }
@@ -104,6 +129,9 @@ Response:
     "name": "Sample Product",
     "description": "A sample product description",
     "price": 29.99,
+    "category": "Electronics",
+    "multimedia": ["https://example.com/product-image.jpg"],
+    "stock_quantity": 100,
     "created_at": "2024-01-01T00:00:00",
     "updated_at": "2024-01-01T00:00:00"
   }
@@ -115,6 +143,16 @@ Response:
 - Product name must not be empty
 - Price must be positive and have at most 2 decimal places
 - Description is optional
+- Category is optional but must be a string if provided
+- Multimedia must be a list of valid URLs if provided
+- Stock quantity must be a non-negative integer
+
+## Filtering Capabilities
+
+The API supports filtering products by:
+- Category: `GET /products?category=Electronics`
+- Price range: `GET /products?min_price=10&max_price=50`
+- Stock availability: `GET /products?in_stock=true`
 
 ## Project Structure
 
