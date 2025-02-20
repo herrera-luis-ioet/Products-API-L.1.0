@@ -1,1 +1,3 @@
-# Products-API-L.1.0
+# Project Repository
+
+This is the initial README file for the project.
