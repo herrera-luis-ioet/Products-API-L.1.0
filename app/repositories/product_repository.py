@@ -27,6 +27,9 @@ class ProductRepository:
                 - name (str): Product name
                 - description (str, optional): Product description
                 - price (float): Product price
+                - category (str, optional): Product category
+                - multimedia (list, optional): List of multimedia URLs
+                - stock_quantity (int, optional): Available stock quantity
 
         Returns:
             Product: Created product instance
@@ -40,7 +43,10 @@ class ProductRepository:
         product = Product(
             name=product_data['name'],
             description=product_data.get('description'),
-            price=float(product_data['price'])
+            price=float(product_data['price']),
+            category=product_data.get('category'),
+            multimedia=product_data.get('multimedia', []),
+            stock_quantity=product_data.get('stock_quantity', 0)
         )
         self.db.add(product)
         self.db.commit()
@@ -81,6 +87,9 @@ class ProductRepository:
                 - name (str, optional): Product name
                 - description (str, optional): Product description
                 - price (float, optional): Product price
+                - category (str, optional): Product category
+                - multimedia (list, optional): List of multimedia URLs
+                - stock_quantity (int, optional): Available stock quantity
 
         Returns:
             Optional[Product]: Updated product instance if found, None otherwise
@@ -101,6 +110,12 @@ class ProductRepository:
             product.description = product_data['description']
         if 'price' in product_data:
             product.price = float(product_data['price'])
+        if 'category' in product_data:
+            product.category = product_data['category']
+        if 'multimedia' in product_data:
+            product.multimedia = product_data['multimedia']
+        if 'stock_quantity' in product_data:
+            product.stock_quantity = int(product_data['stock_quantity'])
 
         self.db.commit()
         self.db.refresh(product)
