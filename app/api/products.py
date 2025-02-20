@@ -1,201 +1,98 @@
+from fastapi import APIRouter, Depends, HTTPException
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field, validator
-from datetime import datetime
+from pydantic import BaseModel, conlist
 
+from app.models.product import Product
 from app.services.product_service import ProductService
-from app.repositories.product_repository import ProductRepository
-from app.database import get_db
-from sqlalchemy.orm import Session
 
-router = APIRouter(
-    prefix="/products",
-    tags=["products"],
-    responses={404: {"description": "Not found"}},
-)
+router = APIRouter()
 
-# Pydantic models for request/response
-class ProductBase(BaseModel):
-    """Base Pydantic model for Product data."""
-    name: str = Field(..., description="Name of the product", min_length=1)
-    description: Optional[str] = Field(None, description="Optional description of the product")
-    price: float = Field(..., description="Price of the product", gt=0)
-
-    @validator('price')
-    def validate_price(cls, v):
-        """Validate that price is positive and has at most 2 decimal places."""
-        if round(v, 2) != v:
-            raise ValueError('Price must have at most 2 decimal places')
-        return v
-
-class ProductCreate(ProductBase):
-    """Pydantic model for creating a product."""
-    pass
-
-class ProductUpdate(BaseModel):
-    """Pydantic model for updating a product."""
-    name: Optional[str] = Field(None, description="Name of the product", min_length=1)
-    description: Optional[str] = Field(None, description="Optional description of the product")
-    price: Optional[float] = Field(None, description="Price of the product", gt=0)
-
-    @validator('price')
-    def validate_price(cls, v):
-        """Validate that price is positive and has at most 2 decimal places."""
-        if v is not None:
-            if round(v, 2) != v:
-                raise ValueError('Price must have at most 2 decimal places')
-        return v
-
-class ProductResponse(ProductBase):
-    """Pydantic model for product response."""
-    id: int
-    created_at: datetime
-    updated_at: datetime
+class ProductCreate(BaseModel):
+    """Model for creating a product with validation."""
+    name: str
+    description: str
+    price: float
+    category: Optional[str] = None
+    multimedia: Optional[conlist(str, min_items=0)] = []  # List of URLs
+    stock_quantity: int = 0
 
     class Config:
-        orm_mode = True
+        schema_extra = {
+            "example": {
+                "name": "Sample Product",
+                "description": "A detailed product description",
+                "price": 29.99,
+                "category": "Electronics",
+                "multimedia": ["http://example.com/image1.jpg"],
+                "stock_quantity": 100
+            }
+        }
 
-# Dependency injection
-def get_product_service(db: Session = Depends(get_db)) -> ProductService:
-    """Dependency for getting ProductService instance."""
-    repository = ProductRepository(db)
-    return ProductService(repository)
-
-# API Routes
-@router.post("/", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
-async def create_product(
-    product: ProductCreate,
-    service: ProductService = Depends(get_product_service)
-) -> ProductResponse:
+@router.post("/products/", response_model=Product)
+async def create_product(product: ProductCreate, product_service: ProductService = Depends()):
     """
     Create a new product.
-
-    Args:
-        product (ProductCreate): Product data to create
-
-    Returns:
-        ProductResponse: Created product data
-
-    Raises:
-        HTTPException: If validation fails or creation fails
+    
+    - category: Optional product category
+    - multimedia: Optional list of media URLs
+    - stock_quantity: Product stock level (minimum 0)
     """
-    try:
-        created_product = service.create_product(product.dict())
-        return created_product
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+    product_dict = product.dict()
+    return await product_service.create_product(Product(**product_dict))
 
-@router.get("/", response_model=List[ProductResponse])
-async def get_all_products(
-    service: ProductService = Depends(get_product_service)
-) -> List[ProductResponse]:
-    """
-    Get all products.
-
-    Returns:
-        List[ProductResponse]: List of all products
-
-    Raises:
-        HTTPException: If retrieval fails
-    """
-    try:
-        return service.get_all_products()
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
-
-@router.get("/{product_id}", response_model=ProductResponse)
-async def get_product(
-    product_id: int,
-    service: ProductService = Depends(get_product_service)
-) -> ProductResponse:
-    """
-    Get a specific product by ID.
-
-    Args:
-        product_id (int): ID of the product to retrieve
-
-    Returns:
-        ProductResponse: Product data
-
-    Raises:
-        HTTPException: If product not found or retrieval fails
-    """
-    try:
-        return service.get_product(product_id)
-    except KeyError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with ID {product_id} not found"
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-
-@router.put("/{product_id}", response_model=ProductResponse)
-async def update_product(
-    product_id: int,
-    product: ProductUpdate,
-    service: ProductService = Depends(get_product_service)
-) -> ProductResponse:
-    """
-    Update a product by ID.
-
-    Args:
-        product_id (int): ID of the product to update
-        product (ProductUpdate): Product data to update
-
-    Returns:
-        ProductResponse: Updated product data
-
-    Raises:
-        HTTPException: If product not found or update fails
-    """
-    try:
-        # Only include non-None values in update
-        update_data = {k: v for k, v in product.dict().items() if v is not None}
-        return service.update_product(product_id, update_data)
-    except KeyError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with ID {product_id} not found"
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-
-@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_product(
-    product_id: int,
-    service: ProductService = Depends(get_product_service)
+@router.get("/products/", response_model=List[Product])
+async def get_products(
+    category: Optional[str] = None,
+    min_stock: Optional[int] = None,
+    product_service: ProductService = Depends()
 ):
     """
-    Delete a product by ID.
-
-    Args:
-        product_id (int): ID of the product to delete
-
-    Raises:
-        HTTPException: If product not found or deletion fails
+    Get all products with optional filters.
+    
+    - category: Filter products by category
+    - min_stock: Filter products by minimum stock level
     """
-    try:
-        service.delete_product(product_id)
-    except KeyError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product with ID {product_id} not found"
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+    products = await product_service.get_all_products()
+    
+    if category:
+        products = [p for p in products if p.category == category]
+    if min_stock is not None:
+        products = [p for p in products if p.stock_quantity >= min_stock]
+        
+    return products
+
+@router.get("/products/{product_id}", response_model=Product)
+async def get_product(product_id: int, product_service: ProductService = Depends()):
+    """Get a product by ID."""
+    product = await product_service.get_product_by_id(product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
+
+@router.put("/products/{product_id}", response_model=Product)
+async def update_product(
+    product_id: int, 
+    product: ProductCreate,
+    product_service: ProductService = Depends()
+):
+    """
+    Update a product.
+    
+    Supports updating all fields including:
+    - category
+    - multimedia
+    - stock_quantity
+    """
+    product_dict = product.dict()
+    updated_product = await product_service.update_product(product_id, Product(**product_dict))
+    if not updated_product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return updated_product
+
+@router.delete("/products/{product_id}")
+async def delete_product(product_id: int, product_service: ProductService = Depends()):
+    """Delete a product."""
+    deleted = await product_service.delete_product(product_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return {"message": "Product deleted successfully"}
