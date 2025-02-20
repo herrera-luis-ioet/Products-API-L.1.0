@@ -33,7 +33,7 @@
         },
         "Task1SubTask5": {
           "description": "Implement API routes",
-          "status": "to-do",
+          "status": "completed",
           "micro_agent": "CodeWritingAgent",
           "details": "Create FastAPI routes for Product management:\n- POST /products\n- GET /products\n- GET /products/{id}\n- PUT /products/{id}\n- DELETE /products/{id}\nInclude request/response models, validation, and error handling"
         },
@@ -42,6 +42,12 @@
           "status": "to-do",
           "micro_agent": "CodeWritingAgent",
           "details": "Update project documentation with:\n- Project overview\n- Setup instructions\n- API documentation\n- Usage examples"
+        },
+        "Task1SubTask7": {
+          "description": "Integrate product routes with main FastAPI application",
+          "status": "to-do",
+          "micro_agent": "CodeWritingAgent",
+          "details": "Update app/main.py to:\n1. Import the product router from app/api/products.py\n2. Include the router in the FastAPI application with appropriate prefix\n3. Configure CORS if needed\n4. Ensure proper dependency injection setup\n5. Add error handlers if needed"
         }
       }
     }
