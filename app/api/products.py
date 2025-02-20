@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
-from typing import List, Optional, Annotated
-from pydantic import BaseModel, Field
+from typing import List
+from pydantic import BaseModel, Field, ConfigDict
+from typing_extensions import Annotated
 
 from app.models.product import Product
 from app.services.product_service import ProductService
@@ -9,19 +10,19 @@ router = APIRouter()
 
 class ProductCreate(BaseModel):
     """Model for creating a product with validation."""
-    name: str = Field(description="Product name", min_length=1, max_length=100)
-    description: str = Field(description="Product description", min_length=10, max_length=1000)
-    price: float = Field(gt=0, lt=1000000, description="Product price (greater than 0 and less than 1,000,000)")
-    category: Optional[str] = Field(default=None, min_length=2, max_length=50, description="Product category")
-    multimedia: Optional[List[str]] = Field(
-        default=[], 
+    name: Annotated[str, Field(description="Product name", min_length=1, max_length=100)]
+    description: Annotated[str, Field(description="Product description", min_length=10, max_length=1000)]
+    price: Annotated[float, Field(gt=0, lt=1000000, description="Product price (greater than 0 and less than 1,000,000)")]
+    category: Annotated[str | None, Field(default=None, min_length=2, max_length=50, description="Product category")] = None
+    multimedia: Annotated[List[str] | None, Field(
+        default_factory=list,
         max_length=5,
         description="List of media URLs (maximum 5 URLs). Each URL should be a valid string pointing to media content."
-    )
-    stock_quantity: int = Field(default=0, ge=0, le=100000, description="Product stock quantity (0 to 100,000)")
+    )] = None
+    stock_quantity: Annotated[int, Field(default=0, ge=0, le=100000, description="Product stock quantity (0 to 100,000)")] = 0
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "Sample Product",
                 "description": "A detailed product description",
@@ -31,6 +32,7 @@ class ProductCreate(BaseModel):
                 "stock_quantity": 100
             }
         }
+    )
 
 @router.post("/products/", response_model=Product)
 async def create_product(product: ProductCreate, product_service: ProductService = Depends()):
