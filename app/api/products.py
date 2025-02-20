@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
-from typing import List, Optional
-from pydantic import BaseModel, conlist
+from typing import List, Optional, Annotated
+from pydantic import BaseModel, Field
 
 from app.models.product import Product
 from app.services.product_service import ProductService
@@ -9,12 +9,12 @@ router = APIRouter()
 
 class ProductCreate(BaseModel):
     """Model for creating a product with validation."""
-    name: str
-    description: str
-    price: float
-    category: Optional[str] = None
-    multimedia: Optional[conlist(str, min_items=0)] = []  # List of URLs
-    stock_quantity: int = 0
+    name: str = Field(description="Product name")
+    description: str = Field(description="Product description")
+    price: float = Field(gt=0, description="Product price")
+    category: Optional[str] = Field(default=None, description="Product category")
+    multimedia: Optional[List[str]] = Field(default=[], description="List of URLs")
+    stock_quantity: int = Field(default=0, ge=0, description="Product stock quantity")
 
     class Config:
         schema_extra = {
@@ -42,8 +42,8 @@ async def create_product(product: ProductCreate, product_service: ProductService
 
 @router.get("/products/", response_model=List[Product])
 async def get_products(
-    category: Optional[str] = None,
-    min_stock: Optional[int] = None,
+    category: Optional[str] = Field(default=None, description="Filter products by category"),
+    min_stock: Optional[int] = Field(default=None, ge=0, description="Filter products by minimum stock level"),
     product_service: ProductService = Depends()
 ):
     """
@@ -62,7 +62,10 @@ async def get_products(
     return products
 
 @router.get("/products/{product_id}", response_model=Product)
-async def get_product(product_id: int, product_service: ProductService = Depends()):
+async def get_product(
+    product_id: int = Field(gt=0, description="Product ID"),
+    product_service: ProductService = Depends()
+):
     """Get a product by ID."""
     product = await product_service.get_product_by_id(product_id)
     if not product:
@@ -71,8 +74,8 @@ async def get_product(product_id: int, product_service: ProductService = Depends
 
 @router.put("/products/{product_id}", response_model=Product)
 async def update_product(
-    product_id: int, 
-    product: ProductCreate,
+    product_id: int = Field(gt=0, description="Product ID"),
+    product: ProductCreate = Field(description="Product data to update"),
     product_service: ProductService = Depends()
 ):
     """
@@ -90,7 +93,10 @@ async def update_product(
     return updated_product
 
 @router.delete("/products/{product_id}")
-async def delete_product(product_id: int, product_service: ProductService = Depends()):
+async def delete_product(
+    product_id: int = Field(gt=0, description="Product ID"),
+    product_service: ProductService = Depends()
+):
     """Delete a product."""
     deleted = await product_service.delete_product(product_id)
     if not deleted:
