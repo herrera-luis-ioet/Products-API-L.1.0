@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from .database import engine, Base
+from .database import init_db
 from app.api.products import router as product_router
 
 app = FastAPI(
@@ -22,8 +22,6 @@ app.add_middleware(
 # Include product router with prefix
 app.include_router(product_router, prefix="/api/v1")
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
 
 # Global exception handlers
 @app.exception_handler(HTTPException)
@@ -39,6 +37,10 @@ async def general_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"detail": "Internal server error"},
     )
+
+@app.on_event("startup")
+async def on_startup():
+    await init_db()
 
 @app.get("/")
 async def root():

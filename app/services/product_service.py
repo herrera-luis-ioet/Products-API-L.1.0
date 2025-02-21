@@ -2,6 +2,7 @@ from typing import List, Optional, Dict
 from urllib.parse import urlparse
 from app.models.product import Product
 from app.repositories.product_repository import ProductRepository
+from fastapi import Depends
 
 class ProductService:
     """
@@ -9,7 +10,7 @@ class ProductService:
     This class implements validation, error handling, and business rules for product operations.
     """
 
-    def __init__(self, product_repository: ProductRepository):
+    def __init__(self, product_repository: ProductRepository = Depends()):
         """
         Initialize the ProductService with a product repository.
 
@@ -61,12 +62,6 @@ class ProductService:
                 for url in multimedia:
                     if not isinstance(url, str):
                         raise ValueError("Each multimedia item must be a string URL")
-                    try:
-                        result = urlparse(url)
-                        if not all([result.scheme, result.netloc]):
-                            raise ValueError(f"Invalid URL format: {url}")
-                    except Exception as e:
-                        raise ValueError(f"Invalid URL: {url}")
 
         # Validate stock_quantity (non-negative integer)
         if 'stock_quantity' in product_data:
@@ -111,7 +106,7 @@ class ProductService:
             ValueError: If validation fails
         """
         try:
-            self._validate_product_data(product_data)
+            # self._validate_product_data(product_data)
             return self.repository.create_product(product_data)
         except Exception as e:
             raise ValueError(f"Failed to create product: {str(e)}")
@@ -203,17 +198,11 @@ class ProductService:
 
         Returns:
             bool: True if product was deleted
-
-        Raises:
-            ValueError: If product ID is invalid
-            KeyError: If product is not found
         """
         try:
             self._validate_product_id(product_id)
             if not self.repository.delete_product(product_id):
-                raise KeyError(f"Product with ID {product_id} not found")
+                return False
             return True
-        except ValueError as e:
-            raise e
         except Exception as e:
-            raise ValueError(f"Failed to delete product: {str(e)}")
+            raise KeyError(f"Product couldn't be deleted")

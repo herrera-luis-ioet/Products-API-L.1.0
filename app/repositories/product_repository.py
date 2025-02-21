@@ -1,6 +1,10 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from app.models.product import Product
+from pydantic import BaseModel
+from app.database import get_db
+from fastapi import Depends
+
 
 class ProductRepository:
     """
@@ -8,7 +12,7 @@ class ProductRepository:
     This class implements CRUD operations for products using SQLAlchemy.
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session = Depends(get_db)):
         """
         Initialize the ProductRepository with a database session.
 
@@ -37,16 +41,16 @@ class ProductRepository:
         Raises:
             ValueError: If required fields are missing or invalid
         """
-        if not product_data.get('name') or not product_data.get('price'):
+        if not product_data['name'] or not product_data['price']:
             raise ValueError("Product name and price are required")
 
         product = Product(
             name=product_data['name'],
-            description=product_data.get('description'),
+            description=product_data['description'],
             price=float(product_data['price']),
-            category=product_data.get('category'),
-            multimedia=product_data.get('multimedia', []),
-            stock_quantity=product_data.get('stock_quantity', 0)
+            category=product_data['category'],
+            multimedia=product_data['multimedia'],
+            stock_quantity=product_data['stock_quantity']
         )
         self.db.add(product)
         self.db.commit()

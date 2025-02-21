@@ -1,7 +1,9 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, DateTime, ARRAY
+from sqlalchemy import Column, Integer, String, Float, DateTime, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import validates
+from typing import List
+from pydantic import BaseModel
 
 Base = declarative_base()
 
@@ -27,7 +29,7 @@ class Product(Base):
     description = Column(String, nullable=True)
     price = Column(Float, nullable=False)
     category = Column(String, nullable=True)
-    multimedia = Column(ARRAY(String), default=[])
+    multimedia = multimedia = Column(JSON, default=[])
     stock_quantity = Column(Integer, default=0)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -77,6 +79,3 @@ class Product(Base):
             raise ValueError("Stock quantity cannot be negative")
         return quantity
 
-    def __repr__(self):
-        """String representation of the Product model."""
-        return f"<Product(id={self.id}, name='{self.name}', price={self.price})>"
